@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Hello To-Do — FastAPI minimal
 
 Run locally:
@@ -20,3 +21,6 @@ curl http://127.0.0.1:8000/
 ```
 
 Open interactive docs: `http://127.0.0.1:8000/docs`
+=======
+# PTUD_TK1_TodoList
+>>>>>>> 8a56d275c47c38bbba3cfc46382c103857f0c4e2
