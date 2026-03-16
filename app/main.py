@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.routers import todos_router
+from app.routers import auth_router, todos_router
 
 
 def create_app() -> FastAPI:
@@ -15,6 +15,7 @@ def create_app() -> FastAPI:
     async def root() -> dict[str, str]:
         return {"message": "Xin chao tu FastAPI Hello To-Do"}
 
+    app.include_router(auth_router, prefix=settings.API_V1_STR)
     app.include_router(todos_router, prefix=settings.API_V1_STR)
     return app
 

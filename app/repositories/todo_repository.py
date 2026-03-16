@@ -9,9 +9,10 @@ from app.schemas.todo import TodoCreate, TodoPatch, TodoUpdate
 
 
 class TodoRepository:
-    def create(self, session: Session, payload: TodoCreate) -> TodoModel:
+    def create(self, session: Session, payload: TodoCreate, owner_id: int) -> TodoModel:
         now = datetime.utcnow()
         todo = TodoModel(
+            owner_id=owner_id,
             title=payload.title,
             description=payload.description,
             is_done=False,
@@ -27,6 +28,7 @@ class TodoRepository:
         self,
         session: Session,
         *,
+        owner_id: int,
         is_done: Optional[bool] = None,
         q: Optional[str] = None,
         sort: str = "-created_at",
@@ -35,6 +37,9 @@ class TodoRepository:
     ) -> tuple[list[TodoModel], int]:
         stmt = select(TodoModel)
         count_stmt = select(func.count()).select_from(TodoModel)
+
+        stmt = stmt.where(TodoModel.owner_id == owner_id)
+        count_stmt = count_stmt.where(TodoModel.owner_id == owner_id)
 
         if is_done is not None:
             stmt = stmt.where(TodoModel.is_done == is_done)
@@ -57,11 +62,12 @@ class TodoRepository:
         total = session.exec(count_stmt).one()
         return items, int(total)
 
-    def get(self, session: Session, todo_id: int) -> Optional[TodoModel]:
-        return session.get(TodoModel, todo_id)
+    def get(self, session: Session, todo_id: int, owner_id: int) -> Optional[TodoModel]:
+        stmt = select(TodoModel).where(TodoModel.id == todo_id, TodoModel.owner_id == owner_id)
+        return session.exec(stmt).first()
 
-    def update(self, session: Session, todo_id: int, payload: TodoUpdate) -> Optional[TodoModel]:
-        todo = session.get(TodoModel, todo_id)
+    def update(self, session: Session, todo_id: int, payload: TodoUpdate, owner_id: int) -> Optional[TodoModel]:
+        todo = self.get(session, todo_id, owner_id)
         if not todo:
             return None
         todo.title = payload.title
@@ -73,8 +79,8 @@ class TodoRepository:
         session.refresh(todo)
         return todo
 
-    def patch(self, session: Session, todo_id: int, payload: TodoPatch) -> Optional[TodoModel]:
-        todo = session.get(TodoModel, todo_id)
+    def patch(self, session: Session, todo_id: int, payload: TodoPatch, owner_id: int) -> Optional[TodoModel]:
+        todo = self.get(session, todo_id, owner_id)
         if not todo:
             return None
 
@@ -87,8 +93,8 @@ class TodoRepository:
         session.refresh(todo)
         return todo
 
-    def complete(self, session: Session, todo_id: int) -> Optional[TodoModel]:
-        todo = session.get(TodoModel, todo_id)
+    def complete(self, session: Session, todo_id: int, owner_id: int) -> Optional[TodoModel]:
+        todo = self.get(session, todo_id, owner_id)
         if not todo:
             return None
         todo.is_done = True
@@ -98,8 +104,8 @@ class TodoRepository:
         session.refresh(todo)
         return todo
 
-    def delete(self, session: Session, todo_id: int) -> bool:
-        todo = session.get(TodoModel, todo_id)
+    def delete(self, session: Session, todo_id: int, owner_id: int) -> bool:
+        todo = self.get(session, todo_id, owner_id)
         if not todo:
             return False
         session.delete(todo)

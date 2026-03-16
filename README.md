@@ -265,3 +265,60 @@ curl -X PATCH http://127.0.0.1:8000/api/v1/todos/1 -H "Content-Type: application
 # Đánh dấu hoàn thành
 curl -X POST http://127.0.0.1:8000/api/v1/todos/1/complete
 ```
+
+---
+
+# Cấp 5 - Authentication + User riêng
+
+Mục tiêu: mỗi user có to-do riêng.
+
+## Yêu cầu
+
+- Bảng `users`: `id`, `email`, `hashed_password`, `is_active`, `created_at`
+- JWT login:
+	- `POST /api/v1/auth/register`
+	- `POST /api/v1/auth/login`
+	- `GET /api/v1/auth/me`
+- Todo gắn `owner_id`
+
+## Tiêu chí đạt
+
+- User A không xem/xóa todo của User B
+- Password hash bằng `passlib/bcrypt`
+
+## Cấu hình thêm cho JWT
+
+Trong `.env` (tuỳ chọn):
+
+```env
+JWT_SECRET_KEY=change-this-secret-key
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
+```
+
+## Migration Cấp 5
+
+```powershell
+alembic upgrade head
+```
+
+## Luồng test nhanh Cấp 5
+
+```powershell
+# 1) Đăng ký
+curl -X POST http://127.0.0.1:8000/api/v1/auth/register -H "Content-Type: application/json" -d '{"email":"usera@example.com","password":"secret123"}'
+
+# 2) Đăng nhập lấy token
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login -H "Content-Type: application/json" -d '{"email":"usera@example.com","password":"secret123"}'
+
+# 3) Gọi /auth/me
+curl http://127.0.0.1:8000/api/v1/auth/me -H "Authorization: Bearer <TOKEN>"
+
+# 4) Tạo todo của user hiện tại
+curl -X POST http://127.0.0.1:8000/api/v1/todos -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"title":"Todo cua user A"}'
+```
+
+Ghi chú bảo mật:
+
+- Tất cả endpoint Todo yêu cầu token hợp lệ.
+- Truy vấn Todo luôn lọc theo `owner_id = current_user.id`, nên không thể xem/sửa/xóa chéo user.
