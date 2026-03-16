@@ -15,6 +15,7 @@ class TodoModel(SQLModel, table=True):
     description: Optional[str] = Field(default=None)
     is_done: bool = Field(default=False, index=True)
     due_date: Optional[date] = Field(default=None, index=True)
+    deleted_at: Optional[datetime] = Field(default=None, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 

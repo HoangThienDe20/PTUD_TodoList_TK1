@@ -439,3 +439,51 @@ Kết quả mong đợi:
 ```json
 {"status":"ok"}
 ```
+
+---
+
+# Cấp 8 - Soft Delete (deleted_at)
+
+Mục tiêu: khi xóa todo sẽ không xóa vật lý khỏi DB, mà đánh dấu thời điểm xóa bằng `deleted_at`.
+
+## Yêu cầu đã làm
+
+- Thêm cột `deleted_at` vào bảng `todos`
+- `DELETE /api/v1/todos/{id}` chuyển sang xóa mềm
+- Các API đọc/cập nhật chỉ làm việc với todo chưa bị xóa mềm:
+	- `GET /api/v1/todos`
+	- `GET /api/v1/todos/{id}`
+	- `PUT/PATCH/POST complete`
+	- `GET /api/v1/todos/overdue`, `GET /api/v1/todos/today`
+
+## Migration Cấp 8
+
+```powershell
+alembic upgrade head
+```
+
+Migration mới: `20260316_0004_add_soft_delete_to_todos.py`.
+
+## Test nhanh Cấp 8
+
+```powershell
+# 1) Tạo todo
+curl -X POST http://127.0.0.1:8000/api/v1/todos -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"title":"Task soft delete"}'
+
+# 2) Xóa mềm
+curl -X DELETE http://127.0.0.1:8000/api/v1/todos/<ID> -H "Authorization: Bearer <TOKEN>"
+
+# 3) Lấy lại theo id -> 404
+curl http://127.0.0.1:8000/api/v1/todos/<ID> -H "Authorization: Bearer <TOKEN>"
+
+# 4) List -> không còn item đã xóa mềm
+curl http://127.0.0.1:8000/api/v1/todos -H "Authorization: Bearer <TOKEN>"
+```
+
+## Test tự động
+
+```powershell
+pytest -q
+```
+
+Đã bổ sung test `test_soft_delete_hides_todo` để xác nhận hành vi xóa mềm.

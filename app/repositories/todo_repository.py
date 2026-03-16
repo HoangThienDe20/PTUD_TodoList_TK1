@@ -53,6 +53,10 @@ class TodoRepository:
             updated_at=todo.updated_at,
         )
 
+    @staticmethod
+    def _is_active_todo():
+        return TodoModel.deleted_at.is_(None)
+
     def create(self, session: Session, payload: TodoCreate, owner_id: int) -> TodoOut:
         now = datetime.utcnow()
         todo = TodoModel(
@@ -84,8 +88,8 @@ class TodoRepository:
         stmt = select(TodoModel).options(selectinload(TodoModel.tags))
         count_stmt = select(func.count()).select_from(TodoModel)
 
-        stmt = stmt.where(TodoModel.owner_id == owner_id)
-        count_stmt = count_stmt.where(TodoModel.owner_id == owner_id)
+        stmt = stmt.where(TodoModel.owner_id == owner_id, self._is_active_todo())
+        count_stmt = count_stmt.where(TodoModel.owner_id == owner_id, self._is_active_todo())
 
         if is_done is not None:
             stmt = stmt.where(TodoModel.is_done == is_done)
@@ -112,7 +116,7 @@ class TodoRepository:
         stmt = (
             select(TodoModel)
             .options(selectinload(TodoModel.tags))
-            .where(TodoModel.id == todo_id, TodoModel.owner_id == owner_id)
+            .where(TodoModel.id == todo_id, TodoModel.owner_id == owner_id, self._is_active_todo())
         )
         todo = session.exec(stmt).first()
         if not todo:
@@ -124,6 +128,8 @@ class TodoRepository:
         if not todo:
             return None
         if todo.owner_id != owner_id:
+            return None
+        if todo.deleted_at is not None:
             return None
         todo.title = payload.title
         todo.description = payload.description
@@ -141,6 +147,8 @@ class TodoRepository:
         if not todo:
             return None
         if todo.owner_id != owner_id:
+            return None
+        if todo.deleted_at is not None:
             return None
 
         data = payload.model_dump(exclude_unset=True)
@@ -161,6 +169,8 @@ class TodoRepository:
             return None
         if todo.owner_id != owner_id:
             return None
+        if todo.deleted_at is not None:
+            return None
         todo.is_done = True
         todo.updated_at = datetime.utcnow()
         session.add(todo)
@@ -174,7 +184,12 @@ class TodoRepository:
             return False
         if todo.owner_id != owner_id:
             return False
-        session.delete(todo)
+        if todo.deleted_at is not None:
+            return False
+        now = datetime.utcnow()
+        todo.deleted_at = now
+        todo.updated_at = now
+        session.add(todo)
         session.commit()
         return True
 
@@ -185,6 +200,7 @@ class TodoRepository:
             .options(selectinload(TodoModel.tags))
             .where(
                 TodoModel.owner_id == owner_id,
+                self._is_active_todo(),
                 TodoModel.is_done == False,
                 TodoModel.due_date.is_not(None),
                 TodoModel.due_date < today,
@@ -201,6 +217,7 @@ class TodoRepository:
             .options(selectinload(TodoModel.tags))
             .where(
                 TodoModel.owner_id == owner_id,
+                self._is_active_todo(),
                 TodoModel.is_done == False,
                 TodoModel.due_date == today,
             )

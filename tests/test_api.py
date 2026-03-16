@@ -93,3 +93,25 @@ def test_create_todo_auth_fail(client: TestClient) -> None:
     )
 
     assert resp.status_code == 401
+
+
+def test_soft_delete_hides_todo(client: TestClient) -> None:
+    headers = auth_headers(client)
+
+    created = client.post(
+        "/api/v1/todos",
+        json={"title": "Task se bi soft delete"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    todo_id = created.json()["id"]
+
+    deleted = client.delete(f"/api/v1/todos/{todo_id}", headers=headers)
+    assert deleted.status_code == 204
+
+    get_after_delete = client.get(f"/api/v1/todos/{todo_id}", headers=headers)
+    assert get_after_delete.status_code == 404
+
+    listed = client.get("/api/v1/todos", headers=headers)
+    assert listed.status_code == 200
+    assert all(item["id"] != todo_id for item in listed.json()["items"])
