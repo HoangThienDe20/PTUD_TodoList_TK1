@@ -11,6 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.models.todo import TodoModel
 from app.models.user import UserModel
+from app.models.tag import TagModel, TodoTagLink
 
 config = context.config
 

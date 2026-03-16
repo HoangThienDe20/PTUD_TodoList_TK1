@@ -322,3 +322,48 @@ Ghi chú bảo mật:
 
 - Tất cả endpoint Todo yêu cầu token hợp lệ.
 - Truy vấn Todo luôn lọc theo `owner_id = current_user.id`, nên không thể xem/sửa/xóa chéo user.
+
+---
+
+# Cấp 6 - Nâng cao (tag, deadline, nhắc việc)
+
+Mục tiêu: thêm tính năng giống app thật.
+
+## Yêu cầu tính năng
+
+- `due_date` (deadline)
+- `tags` (nhiều tag)
+- `GET /api/v1/todos/overdue` danh sách quá hạn
+- `GET /api/v1/todos/today` việc cần làm hôm nay
+
+## Cách dùng payload mới
+
+- Tạo todo có deadline và tags:
+
+```json
+{
+	"title": "Ôn FastAPI",
+	"description": "Chuẩn bị demo",
+	"due_date": "2026-03-20",
+	"tags": ["study", "backend"]
+}
+```
+
+## Migration Cấp 6
+
+```powershell
+alembic upgrade head
+```
+
+## Test nhanh Cấp 6
+
+```powershell
+# Tạo todo có due_date + tags
+curl -X POST http://127.0.0.1:8000/api/v1/todos -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" -d '{"title":"Task 1","due_date":"2026-03-16","tags":["work","urgent"]}'
+
+# Danh sách quá hạn
+curl http://127.0.0.1:8000/api/v1/todos/overdue -H "Authorization: Bearer <TOKEN>"
+
+# Danh sách việc hôm nay
+curl http://127.0.0.1:8000/api/v1/todos/today -H "Authorization: Bearer <TOKEN>"
+```

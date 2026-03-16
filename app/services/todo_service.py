@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from sqlmodel import Session
@@ -50,6 +52,12 @@ class TodoService:
 
     def delete(self, session: Session, todo_id: int, current_user: UserModel) -> bool:
         return self._repo.delete(session, todo_id, current_user.id)
+
+    def overdue(self, session: Session, current_user: UserModel) -> list[TodoOut]:
+        return self._repo.overdue(session, current_user.id)
+
+    def today(self, session: Session, current_user: UserModel) -> list[TodoOut]:
+        return self._repo.today(session, current_user.id)
 
 
 service = TodoService()

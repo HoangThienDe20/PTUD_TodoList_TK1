@@ -45,6 +45,22 @@ def list_todos(
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@router.get("/overdue", response_model=list[TodoOut])
+def list_overdue_todos(
+    session: Session = Depends(get_session),
+    current_user: UserModel = Depends(get_current_user),
+) -> list[TodoOut]:
+    return service.overdue(session, current_user)
+
+
+@router.get("/today", response_model=list[TodoOut])
+def list_today_todos(
+    session: Session = Depends(get_session),
+    current_user: UserModel = Depends(get_current_user),
+) -> list[TodoOut]:
+    return service.today(session, current_user)
+
+
 @router.get("/{todo_id}", response_model=TodoOut)
 def get_todo(
     todo_id: int,
