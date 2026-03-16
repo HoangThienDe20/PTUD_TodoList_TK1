@@ -218,7 +218,7 @@ pip install -r requirements.txt
 alembic upgrade head
 ```
 
-Neu DB da ton tai tu ban chay thu truoc do (table `todos` da duoc tao san), dung lenh sau 1 lan de dong bo version:
+Nếu DB đã tồn tại từ bản chạy thử trước đó (table `todos` đã được tạo sẵn), dùng lệnh sau 1 lần để đồng bộ version:
 
 ```powershell
 alembic stamp head
