@@ -367,3 +367,75 @@ curl http://127.0.0.1:8000/api/v1/todos/overdue -H "Authorization: Bearer <TOKEN
 # Danh sách việc hôm nay
 curl http://127.0.0.1:8000/api/v1/todos/today -H "Authorization: Bearer <TOKEN>"
 ```
+
+---
+
+# Cấp 7 - Testing + Docker + Deploy
+
+Mục tiêu: hoàn thiện quy trình kiểm thử và đóng gói triển khai.
+
+## 1) Testing với Pytest
+
+Đã thêm bộ test API trong thư mục `tests/` với các case chính:
+
+- Tạo todo thành công
+- Validate lỗi dữ liệu (`422`)
+- Không tìm thấy resource (`404`)
+- Lỗi xác thực khi thiếu token (`401`)
+
+Chạy test:
+
+```powershell
+pip install -r requirements.txt
+pytest -q
+```
+
+## 2) Docker hóa ứng dụng
+
+Đã thêm:
+
+- `Dockerfile`: build API FastAPI
+- `docker-compose.yml`: chạy cả `api` + `postgres`
+- `.dockerignore`: giảm kích thước image
+
+## 3) Chạy bằng Docker Compose
+
+```powershell
+docker compose up --build
+```
+
+Sau khi chạy:
+
+- API: `http://127.0.0.1:8000`
+- Swagger: `http://127.0.0.1:8000/docs`
+
+Lưu ý:
+
+- Service `api` sẽ tự chạy `alembic upgrade head` trước khi start server.
+- Alembic đã hỗ trợ đọc `DATABASE_URL` từ biến môi trường để chạy đúng trong container.
+
+## 4) Deploy tài liệu (mức cơ bản)
+
+Luồng deploy đề xuất:
+
+1. Chạy test local: `pytest -q`
+2. Build image: `docker build -t hello-todo-api:latest .`
+3. Chạy smoke test container local
+4. Đẩy image lên registry (Docker Hub/GHCR)
+5. Deploy lên môi trường cloud (App Service/Container Apps/VM) và set biến môi trường:
+	- `DATABASE_URL`
+	- `JWT_SECRET_KEY`
+	- `JWT_ALGORITHM`
+	- `JWT_EXPIRE_MINUTES`
+
+## 5) Quick check sau deploy
+
+```powershell
+curl http://127.0.0.1:8000/health
+```
+
+Kết quả mong đợi:
+
+```json
+{"status":"ok"}
+```

@@ -15,6 +15,11 @@ from app.models.tag import TagModel, TodoTagLink
 
 config = context.config
 
+# Prefer DATABASE_URL from environment for container/deployment scenarios.
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
