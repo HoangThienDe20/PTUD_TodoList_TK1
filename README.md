@@ -21,6 +21,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+### Chạy như trước (không dùng .venv)
+
+Nếu terminal đang hiện `(.venv)`, thoát môi trường ảo trước:
+
+```powershell
+deactivate
+```
+
+Sau đó chạy lại lệnh ở trên bằng Python hệ thống.
+
 Sau khi chạy, mở:
 
 - `http://127.0.0.1:8000/health`
